@@ -16,6 +16,7 @@ var dishesRouter = require('./routes/dishes');
 var promosRouter = require('./routes/promotions');
 var leadersRouter = require('./routes/leaders');
 const uploadRouter = require('./routes/upload');
+var favoritesRouter = require('./routes/favorites');
 
 const mongoose = require('mongoose');
 
@@ -46,6 +47,7 @@ app.all('*', (req, res, next) => {
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
+// app.use(express.static(path.join(__dirname, 'public')));
 
 app.use(logger('dev'));
 app.use(express.json());
@@ -88,6 +90,7 @@ app.use('/dishes', dishesRouter);
 app.use('/promotions', promosRouter);
 app.use('/leaders', leadersRouter);
 app.use('/imageUpload', uploadRouter);
+app.use('/favorites', favoritesRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

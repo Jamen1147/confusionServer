@@ -14,7 +14,8 @@ const User = new Schema({
   admin: {
     type: Boolean,
     default: false
-  }
+  },
+  faceboodId: String
 });
 
 User.plugin(passportLocalMongoose);
