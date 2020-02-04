@@ -75,32 +75,27 @@ favoriteRouter
     res.statusCode = 403;
     res.end('PUT operation not supported on /dishes');
   })
-  .delete(
-    cors.corsWithOptions,
-    authenticate.verifyUser,
-    // authenticate.verifyAdmin,
-    (req, res, next) => {
-      Favorites.findOne({ author: req.user._id }).then(favorite => {
-        if (favorite) {
-          favorite
-            .remove()
-            .then(
-              resp => {
-                res.statusCode = 200;
-                res.setHeader('Content-Type', 'application/json');
-                res.json(resp);
-              },
-              e => next(e)
-            )
-            .catch(e => next(e));
-        } else {
-          err = new Error('User Not Found');
-          err.status = 404;
-          return next(err);
-        }
-      });
-    }
-  );
+  .delete(cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
+    Favorites.findOne({ author: req.user._id }).then(favorite => {
+      if (favorite) {
+        favorite
+          .remove()
+          .then(
+            resp => {
+              res.statusCode = 200;
+              res.setHeader('Content-Type', 'application/json');
+              res.json(resp);
+            },
+            e => next(e)
+          )
+          .catch(e => next(e));
+      } else {
+        err = new Error('User Not Found');
+        err.status = 404;
+        return next(err);
+      }
+    });
+  });
 
 favoriteRouter
   .route('/:dishId')
@@ -108,11 +103,14 @@ favoriteRouter
     res.sendStatus(200);
   })
   .post(cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
+    // Find user's fav list
     Favorites.findOne({ author: req.user._id }).then(favorite => {
+      // Check if user has a fav list
       if (favorite) {
-        // check if dishId is valid
         Dishes.findById(req.params.dishId).then(dish => {
+          // Check if dishId is in dishes
           if (dish) {
+            // Add dish to the list and return distinct dishes
             favorite.dishes = [
               ...new Set([
                 ...favorite.dishes.map(d => d._id.toString()),
@@ -137,25 +135,30 @@ favoriteRouter
           }
         });
       } else {
-        err = new Error('User Not Found');
-        err.status = 404;
-        return next(err);
+        // Create a fav list for the user and add the dish to the list
+        Favorites.create({ author: req.user._id, dishes: [req.params.dishId] })
+          .then(
+            favorite => {
+              res.statusCode = 200;
+              res.setHeader('Content-Type', 'application/json');
+              res.json(favorite);
+            },
+            e => next(e)
+          )
+          .catch(e => next(e));
       }
     });
   })
   .delete(cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
+    // Find user's fav list
     Favorites.findOne({ author: req.user._id }).then(favorite => {
+      // Check if user has a fav list
       if (favorite) {
-        const dishId = req.params.dishId.toString();
-        console.log(dishId);
-        favorite.dishes = favorite.dishes.map(d => d._id.toString());
-        console.log(favorite.dishes);
-        /// ------ here dishes.some has some problem
-        if (favorite.dishes.some(x => x === dishId)) {
-          favorite.dishes = favorite.dishes.splice(
-            favorite.dishes.indexOf(dishId),
-            1
-          );
+        favorite.dishes = favorite.dishes.map(d => d._id);
+        // Check if dishId is in user's fav list
+        if (favorite.dishes.some(x => x == req.params.dishId)) {
+          // Remove the dish
+          favorite.dishes.splice(favorite.dishes.indexOf(req.params.dishId), 1);
           favorite
             .save()
             .then(
