@@ -7,6 +7,7 @@ const jwt = require('jsonwebtoken');
 const FaceboodTokenStrategy = require('passport-facebook-token');
 
 const config = require('./config');
+const facebook = require('./facebook');
 
 exports.local = passport.use(new LocalStrategy(User.authenticate()));
 passport.serializeUser(User.serializeUser());
@@ -50,8 +51,8 @@ exports.verifyAdmin = (req, res, next) => {
 exports.FaceboodTokenStrategy = passport.use(
   new FaceboodTokenStrategy(
     {
-      clientID: config.facebook.clientId,
-      clientSecret: config.facebook.clientSecret
+      clientID: facebook.clientId,
+      clientSecret: facebook.clientSecret
     },
     (accessToken, refreshToken, profile, done) => {
       User.findOne({ facebookId: profile.id }, (err, user) => {
